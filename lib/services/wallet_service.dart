@@ -1,300 +1,155 @@
-import 'dart:typed_data';
-import 'dart:math';
+// WalletConnect service using Reown AppKit (official WalletConnect v2)
+
 import 'package:flutter/foundation.dart';
-import 'package:solana/base58.dart';
-import 'package:solana/solana.dart';
-import 'package:solana_mobile_client/solana_mobile_client.dart';
+import 'package:flutter/material.dart';
+import 'package:reown_appkit/reown_appkit.dart';
 
 class WalletService extends ChangeNotifier {
-  MobileWalletAdapterClient? _client;
-  AuthorizationResult? _authResult;
-  bool _isConnected = false;
-  String? _publicKey;
+  ReownAppKitModal? _appKitModal;
+  ReownAppKitModal? get appKitModal => _appKitModal;
+
+  bool get isConnected => _appKitModal?.isConnected ?? false;
+
+  String? get walletAddress {
+    // Get address for the currently selected chain, or default to Ethereum mainnet (1)
+    final chainId = _appKitModal?.selectedChain?.chainId ?? '1';
+    return _appKitModal?.session?.getAddress(chainId);
+  }
+
+  String get shortenedAddress {
+    final address = walletAddress;
+    if (address == null || address.isEmpty) {
+      return 'Not connected';
+    }
+    if (address.length <= 10) {
+      return address;
+    }
+    return '${address.substring(0, 6)}...${address.substring(address.length - 4)}';
+  }
+
   String? _errorMessage;
-  bool _useMockWallet = false; // Toggle for mock wallet mode
-
-  bool get isConnected => _isConnected;
-  String? get publicKey => _publicKey;
   String? get errorMessage => _errorMessage;
-  bool get useMockWallet => _useMockWallet;
 
-  /// Get Ed25519HDPublicKey from the public key string
-  Ed25519HDPublicKey? get publicKeyObj {
-    if (_publicKey == null) return null;
-    try {
-      return Ed25519HDPublicKey.fromBase58(_publicKey!);
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error creating public key object: $e');
-      }
-      return null;
-    }
-  }
+  // Callbacks for UI
+  void Function()? onSessionConnect;
+  void Function()? onSessionDelete;
 
-  /// Connect to Solana wallet using Mobile Wallet Adapter
-  Future<bool> connectWallet() async {
+  /// Initialize the Reown AppKit modal
+  Future<void> init({
+    required BuildContext context,
+    required String projectId,
+    required PairingMetadata metadata,
+  }) async {
     try {
       _errorMessage = null;
+
+      _appKitModal = ReownAppKitModal(
+        context: context,
+        projectId: projectId,
+        metadata: metadata,
+        enableAnalytics: true,
+        disconnectOnDispose: false,
+      );
+
+      // Setup event listeners
+      _appKitModal!.onModalConnect.subscribe(_onModalConnect);
+      _appKitModal!.onModalDisconnect.subscribe(_onModalDisconnect);
+      _appKitModal!.onModalError.subscribe(_onModalError);
+
+      // Initialize the modal
+      await _appKitModal!.init();
+
       notifyListeners();
 
       if (kDebugMode) {
-        print('Starting wallet connection...');
-      }
-
-      // Try real wallet connection first
-      try {
-        // Create local association scenario with proper configuration
-        final scenario = await LocalAssociationScenario.create();
-
-        if (kDebugMode) {
-          print('Local association scenario created');
-        }
-
-        // Start the session - this will trigger the wallet app to open
-        _client = await scenario.start();
-
-        if (kDebugMode) {
-          print('Session started, authorizing...');
-        }
-
-        // Authorize with wallet
-        _authResult = await _client!.authorize(
-          identityUri: Uri.parse('https://stacksave.app'),
-          iconUri: Uri.parse('https://stacksave.app/favicon.ico'),
-          identityName: 'StackSave',
-          cluster: 'devnet',
-        );
-
-        if (_authResult == null) {
-          throw Exception('Authorization failed - no auth result');
-        }
-
-        if (kDebugMode) {
-          print('Authorization successful!');
-        }
-
-        // Convert public key bytes to base58 string
-        _publicKey = base58encode(_authResult!.publicKey);
-        _isConnected = true;
-        _useMockWallet = false;
-
-        if (kDebugMode) {
-          print('Connected to real wallet: $_publicKey');
-        }
-
-        notifyListeners();
-        return true;
-      } catch (walletError) {
-        if (kDebugMode) {
-          print('Real wallet connection failed: $walletError');
-          print('Falling back to mock wallet for testing...');
-        }
-
-        // Fallback to mock wallet for testing
-        await Future.delayed(const Duration(milliseconds: 800)); // Simulate connection time
-
-        // Generate a random Solana public key for testing
-        final random = Random();
-        final randomBytes = Uint8List(32);
-        for (var i = 0; i < 32; i++) {
-          randomBytes[i] = random.nextInt(256);
-        }
-
-        _publicKey = base58encode(randomBytes);
-        _isConnected = true;
-        _useMockWallet = true;
-
-        if (kDebugMode) {
-          print('Connected to MOCK wallet: $_publicKey');
-          print('Note: This is a test wallet. Real wallet connection failed.');
-        }
-
-        notifyListeners();
-        return true;
+        print('Reown AppKit initialized successfully');
       }
     } catch (e) {
-      _errorMessage = 'Failed to connect wallet: ${e.toString()}';
-      _isConnected = false;
-      _publicKey = null;
-      _useMockWallet = false;
-
       if (kDebugMode) {
-        print('Complete wallet connection failure: $e');
-        print('Stack trace: ${StackTrace.current}');
+        print('Reown AppKit init error: $e');
       }
-
+      _errorMessage = 'Failed to initialize: ${e.toString()}';
       notifyListeners();
-      return false;
     }
   }
 
-  /// Disconnect wallet
-  Future<void> disconnectWallet() async {
+  void _onModalConnect(ModalConnect? event) {
+    if (kDebugMode) {
+      final chainId = _appKitModal?.selectedChain?.chainId ?? '1';
+      print('Modal connected: ${event?.session.getAddress(chainId)}');
+    }
+    onSessionConnect?.call();
+    notifyListeners();
+  }
+
+  void _onModalDisconnect(ModalDisconnect? event) {
+    if (kDebugMode) {
+      print('Modal disconnected');
+    }
+    onSessionDelete?.call();
+    notifyListeners();
+  }
+
+  void _onModalError(ModalError? event) {
+    if (kDebugMode) {
+      print('Modal error: ${event?.message}');
+    }
+    _errorMessage = event?.message ?? 'Unknown error';
+    notifyListeners();
+  }
+
+  /// Open the wallet connection modal
+  Future<void> openModal() async {
+    if (_appKitModal == null) {
+      _errorMessage = 'AppKit not initialized. Call init() first.';
+      notifyListeners();
+      return;
+    }
+
     try {
-      if (_client != null && _authResult != null && !_useMockWallet) {
-        await _client!.deauthorize(authToken: _authResult!.authToken);
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('Disconnect error: $e');
-      }
-    } finally {
-      _client = null;
-      _authResult = null;
-      _isConnected = false;
-      _publicKey = null;
       _errorMessage = null;
-      _useMockWallet = false;
-      notifyListeners();
-    }
-  }
-
-  /// Get shortened wallet address for display
-  String? get shortenedAddress {
-    if (_publicKey == null) return null;
-    if (_publicKey!.length <= 8) return _publicKey;
-    return '${_publicKey!.substring(0, 4)}...${_publicKey!.substring(_publicKey!.length - 4)}';
-  }
-
-  /// Sign and send a transaction
-  /// Returns the transaction signature if successful
-  Future<String?> signAndSendTransaction(Uint8List transaction) async {
-    if (!_isConnected || _client == null || _authResult == null) {
-      _errorMessage = 'Wallet not connected';
-      notifyListeners();
-      return null;
-    }
-
-    if (_useMockWallet) {
-      // Mock transaction for testing
-      if (kDebugMode) {
-        print('Mock wallet: Simulating transaction...');
-      }
-      await Future.delayed(const Duration(milliseconds: 500));
-
-      // Generate a mock signature
-      final random = Random();
-      final mockSignature = base58encode(
-        Uint8List.fromList(List.generate(64, (_) => random.nextInt(256)))
-      );
-
-      if (kDebugMode) {
-        print('Mock transaction signature: $mockSignature');
-      }
-      return mockSignature;
-    }
-
-    try {
-      // Sign and send transaction using Mobile Wallet Adapter
-      final signResult = await _client!.signAndSendTransactions(
-        transactions: [transaction],
-      );
-
-      if (signResult.signatures.isEmpty) {
-        throw Exception('No signed transactions returned');
-      }
-
-      // Get the transaction signature
-      final signature = base58encode(signResult.signatures.first);
-
-      if (kDebugMode) {
-        print('Transaction sent successfully: $signature');
-      }
-
-      return signature;
-    } catch (e) {
-      _errorMessage = 'Transaction failed: ${e.toString()}';
-      if (kDebugMode) {
-        print('Transaction error: $e');
-      }
-      notifyListeners();
-      return null;
-    }
-  }
-
-  /// Sign a transaction without sending it
-  Future<Uint8List?> signTransaction(Uint8List transaction) async {
-    if (!_isConnected || _client == null || _authResult == null) {
-      _errorMessage = 'Wallet not connected';
-      notifyListeners();
-      return null;
-    }
-
-    if (_useMockWallet) {
-      // Mock signing for testing
-      if (kDebugMode) {
-        print('Mock wallet: Simulating transaction signing...');
-      }
-      await Future.delayed(const Duration(milliseconds: 300));
-
-      // Return mock signed transaction
-      return transaction;
-    }
-
-    try {
-      // Sign transaction using Mobile Wallet Adapter
-      final signResult = await _client!.signTransactions(
-        transactions: [transaction],
-      );
-
-      if (signResult.signedPayloads.isEmpty) {
-        throw Exception('No signed transactions returned');
-      }
-
-      if (kDebugMode) {
-        print('Transaction signed successfully');
-      }
-
-      return Uint8List.fromList(signResult.signedPayloads.first);
-    } catch (e) {
-      _errorMessage = 'Signing failed: ${e.toString()}';
-      if (kDebugMode) {
-        print('Signing error: $e');
-      }
-      notifyListeners();
-      return null;
-    }
-  }
-
-  /// Re-authorize the session (useful when auth token expires)
-  Future<bool> reauthorize() async {
-    if (_client == null) {
-      _errorMessage = 'No active session';
-      return false;
-    }
-
-    try {
-      final authToken = _authResult?.authToken;
-      if (authToken == null) {
-        return false;
-      }
-
-      _authResult = await _client!.reauthorize(
-        identityUri: Uri.parse('https://stacksave.app'),
-        iconUri: Uri.parse('https://stacksave.app/favicon.ico'),
-        identityName: 'StackSave',
-        authToken: authToken,
-      );
-
-      if (_authResult != null) {
-        _publicKey = base58encode(_authResult!.publicKey);
-        _isConnected = true;
-        notifyListeners();
-        return true;
-      }
-
-      return false;
+      await _appKitModal!.openModalView();
     } catch (e) {
       if (kDebugMode) {
-        print('Reauthorize error: $e');
+        print('Error opening modal: $e');
       }
-      return false;
+      _errorMessage = 'Failed to open modal: ${e.toString()}';
+      notifyListeners();
     }
+  }
+
+  /// Disconnect from the wallet
+  Future<void> disconnect() async {
+    if (_appKitModal == null) return;
+
+    try {
+      await _appKitModal!.disconnect();
+      _errorMessage = null;
+      notifyListeners();
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error disconnecting: $e');
+      }
+      _errorMessage = 'Failed to disconnect: ${e.toString()}';
+      notifyListeners();
+    }
+  }
+
+  /// Get current chain/network info
+  ReownAppKitModalNetworkInfo? get currentNetwork => _appKitModal?.selectedChain;
+
+  /// Check if a specific chain is selected
+  bool isChainSelected(String chainId) {
+    return _appKitModal?.selectedChain?.chainId == chainId;
   }
 
   @override
   void dispose() {
-    disconnectWallet();
+    // Unsubscribe from events
+    _appKitModal?.onModalConnect.unsubscribe(_onModalConnect);
+    _appKitModal?.onModalDisconnect.unsubscribe(_onModalDisconnect);
+    _appKitModal?.onModalError.unsubscribe(_onModalError);
+
     super.dispose();
   }
 }

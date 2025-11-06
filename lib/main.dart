@@ -48,16 +48,21 @@ class _SplashNavigatorState extends State<SplashNavigator> {
   @override
   void initState() {
     super.initState();
-    // Navigate from Launch A to Launch B after 2 seconds
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => const LaunchBScreen(),
-          ),
-        );
-      }
-    });
+    _initializeApp();
+  }
+
+  Future<void> _initializeApp() async {
+    // Simple delay, no WalletConnect init here
+    // WalletConnect will be initialized when user clicks "Connect Wallet"
+    await Future.delayed(const Duration(seconds: 2));
+
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => const LaunchBScreen(),
+        ),
+      );
+    }
   }
 
   @override

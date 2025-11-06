@@ -8,7 +8,6 @@ import 'package:stacksave/screens/portfolio_screen.dart';
 import 'package:stacksave/screens/profile_screen.dart';
 import 'package:stacksave/screens/withdraw_screen.dart';
 import 'package:stacksave/services/wallet_service.dart';
-import 'package:stacksave/services/stacksave_service.dart';
 
 class HomeScreen extends StatefulWidget {
   final bool showNavBar;
@@ -399,20 +398,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
                           const SizedBox(height: 16),
 
-                          // Faucet Cards
-                          _buildFaucetCard(
-                            title: 'IDRX Faucet',
-                            description: 'Get free IDRX tokens for testing',
-                            amount: '100 IDRX',
-                            color: const Color(0xFF5B9CFF),
-                            icon: Icons.water_drop,
-                            tokenType: 'IDRX',
-                          ),
-                          const SizedBox(height: 12),
+                          // USDC Faucet Card
                           _buildFaucetCard(
                             title: 'USDC Faucet',
                             description: 'Get free USDC tokens for testing',
-                            amount: '10 USDC',
+                            amount: '100 USDC',
                             color: const Color(0xFF0052CC),
                             icon: Icons.account_balance_wallet,
                             tokenType: 'USDC',
@@ -429,7 +419,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
             // Floating Action Button with Speed Dial
             Positioned(
-              bottom: 100,
+              bottom: 90,
               right: 24,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -879,75 +869,82 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ),
               );
 
-              // Claim from faucet
-              final stackSaveService = StackSaveService(
-                walletService: walletService,
-              );
+              try {
+                // Simulate faucet claim (for testing)
+                // In production, this would call your backend API to claim tokens
+                await Future.delayed(const Duration(milliseconds: 800));
 
-              final signature = await stackSaveService.claimFromFaucet(
-                tokenType: tokenType,
-              );
+                // Mock transaction signature
+                final signature = 'faucet_claim_${DateTime.now().millisecondsSinceEpoch}';
 
-              // Close loading dialog
-              if (context.mounted) {
+                // Close loading dialog
+                if (!mounted) return;
+                // ignore: use_build_context_synchronously
                 Navigator.pop(context);
-              }
 
-              // Show result
-              if (context.mounted) {
-                if (signature != null) {
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: const Text('Success!'),
-                      content: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('You received $amount!'),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Transaction Signature:',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                            ),
+                // Show success
+                if (!mounted) return;
+                // ignore: use_build_context_synchronously
+                showDialog(
+                  context: context,
+                  builder: (dialogContext) => AlertDialog(
+                    title: const Text('Success!'),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('You received $amount USDC!'),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Connected Wallet: ${walletService.shortenedAddress}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            signature,
-                            style: const TextStyle(
-                              fontSize: 10,
-                              fontFamily: 'monospace',
-                            ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Transaction ID:',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
                           ),
-                        ],
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('OK'),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          signature,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontFamily: 'monospace',
+                          ),
                         ),
                       ],
                     ),
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        walletService.useMockWallet
-                            ? 'Mock faucet claim simulated!'
-                            : 'Failed to claim from faucet',
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(dialogContext),
+                        child: const Text('OK'),
                       ),
-                      backgroundColor:
-                          walletService.useMockWallet ? Colors.orange : Colors.red,
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                }
-              }
+                    ],
+                  ),
+                );
+              } catch (e) {
+                // Close loading dialog
+                if (!context.mounted) return;
+                // ignore: use_build_context_synchronously
+                Navigator.pop(context);
 
-              stackSaveService.dispose();
+                // Show error
+                if (!context.mounted) return;
+                // ignore: use_build_context_synchronously
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Failed to claim: ${e.toString()}'),
+                    backgroundColor: Colors.red,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: color,

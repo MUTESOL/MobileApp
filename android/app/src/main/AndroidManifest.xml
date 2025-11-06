@@ -27,6 +27,13 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- Deep Linking for WalletConnect -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="stacksave" />
+            </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
@@ -45,9 +52,11 @@
             <data android:mimeType="text/plain"/>
         </intent>
 
-        <!-- Required for Solana Mobile Wallet Adapter -->
-        <intent>
-            <action android:name="solana.mobilewalletadapter.remote.MobileWalletAdapterClient"/>
-        </intent>
+        <!-- Wallet Detection for WalletConnect -->
+        <package android:name="io.metamask"/>
+        <package android:name="com.wallet.crypto.trustapp"/>
+        <package android:name="io.gnosis.safe"/>
+        <package android:name="me.rainbow"/>
+        <package android:name="com.coinbase.android"/>
     </queries>
 </manifest>

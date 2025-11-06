@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:reown_appkit/reown_appkit.dart';
 import 'package:stacksave/constants/colors.dart';
 import 'package:stacksave/services/wallet_service.dart';
 import 'package:stacksave/screens/add_goals_screen.dart';
@@ -12,39 +13,49 @@ class LaunchBScreen extends StatefulWidget {
 }
 
 class _LaunchBScreenState extends State<LaunchBScreen> {
-  bool _isConnecting = false;
+  bool _isInitializing = true;
 
-  Future<void> _handleConnectWallet() async {
+  @override
+  void initState() {
+    super.initState();
+    _initializeWalletService();
+  }
+
+  Future<void> _initializeWalletService() async {
     final walletService = context.read<WalletService>();
 
-    setState(() {
-      _isConnecting = true;
-    });
+    // Initialize Reown AppKit
+    await walletService.init(
+      context: context,
+      projectId: '6d3e960e153683b5bba12c57cbdddf75',
+      metadata: const PairingMetadata(
+        name: 'StackSave',
+        description: 'Save easily, grow effortlessly',
+        url: 'https://stacksave.app',
+        icons: ['https://stacksave.app/icon.png'],
+        redirect: Redirect(
+          native: 'stacksave://',
+          universal: 'https://stacksave.app',
+          linkMode: true,
+        ),
+      ),
+    );
 
-    final success = await walletService.connectWallet();
+    // Setup callbacks
+    walletService.onSessionConnect = () {
+      if (!mounted) return;
 
-    setState(() {
-      _isConnecting = false;
-    });
-
-    if (!mounted) return;
-
-    if (success) {
       // Show success message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            walletService.useMockWallet
-              ? 'Connected to TEST wallet: ${walletService.shortenedAddress}'
-              : 'Connected: ${walletService.shortenedAddress}'
-          ),
-          backgroundColor: walletService.useMockWallet ? Colors.orange : AppColors.primary,
+          content: Text('Connected: ${walletService.shortenedAddress}'),
+          backgroundColor: AppColors.primary,
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 2),
         ),
       );
 
-      // Navigate to Add Goals screen after short delay
+      // Navigate to Add Goals screen
       Future.delayed(const Duration(milliseconds: 500), () {
         if (mounted) {
           Navigator.of(context).pushReplacement(
@@ -54,20 +65,33 @@ class _LaunchBScreenState extends State<LaunchBScreen> {
           );
         }
       });
-    } else {
-      // Show error message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(walletService.errorMessage ?? 'Failed to connect wallet'),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
+    };
+
+    setState(() {
+      _isInitializing = false;
+    });
+  }
+
+  Future<void> _handleConnectWallet() async {
+    final walletService = context.read<WalletService>();
+
+    // Open Reown AppKit modal (with built-in wallet selection UI)
+    await walletService.openModal();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isInitializing) {
+      return const Scaffold(
+        backgroundColor: AppColors.lightBackground,
+        body: Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
       body: SafeArea(
@@ -137,7 +161,7 @@ class _LaunchBScreenState extends State<LaunchBScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                walletService.shortenedAddress ?? '',
+                                walletService.shortenedAddress,
                                 style: const TextStyle(
                                   fontFamily: 'Poppins',
                                   fontSize: 14,
@@ -155,8 +179,9 @@ class _LaunchBScreenState extends State<LaunchBScreen> {
                           height: 56,
                           child: OutlinedButton(
                             onPressed: () async {
-                              await walletService.disconnectWallet();
+                              await walletService.disconnect();
                               if (mounted) {
+                                // ignore: use_build_context_synchronously
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
                                     content: Text('Wallet disconnected'),
@@ -191,7 +216,7 @@ class _LaunchBScreenState extends State<LaunchBScreen> {
                     width: double.infinity,
                     height: 56,
                     child: ElevatedButton(
-                      onPressed: _isConnecting ? null : _handleConnectWallet,
+                      onPressed: _handleConnectWallet,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: AppColors.black,
@@ -199,25 +224,15 @@ class _LaunchBScreenState extends State<LaunchBScreen> {
                           borderRadius: BorderRadius.circular(28),
                         ),
                         elevation: 0,
-                        disabledBackgroundColor: AppColors.grayText,
                       ),
-                      child: _isConnecting
-                          ? const SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(AppColors.black),
-                              ),
-                            )
-                          : const Text(
-                              'Connect Wallet',
-                              style: TextStyle(
-                                fontFamily: 'Poppins',
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
+                      child: const Text(
+                        'Connect Wallet',
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   );
                 },
