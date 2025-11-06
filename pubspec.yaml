@@ -44,6 +44,9 @@ dependencies:
   # Date formatting
   intl: ^0.20.2
 
+  # Image picker for profile photo
+  image_picker: ^1.0.7
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -20,10 +20,8 @@ class _AddGoalsScreenState extends State<AddGoalsScreen> {
   double _scrollOffset = 0.0;
 
   final List<Map<String, String>> _currencies = [
-    {'code': 'SOL', 'name': 'Solana', 'symbol': 'SOL'},
     {'code': 'USDC', 'name': 'USD Coin', 'symbol': 'USDC'},
     {'code': 'USD', 'name': 'US Dollar', 'symbol': 'USD'},
-    {'code': 'IDR', 'name': 'Indonesian Rupiah', 'symbol': 'IDR'},
   ];
 
   @override

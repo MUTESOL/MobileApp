@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:stacksave/constants/colors.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ProfileScreen extends StatefulWidget {
   final bool showNavBar;
@@ -12,7 +13,12 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _nameController = TextEditingController(text: 'John Smith');
+  final TextEditingController _emailController = TextEditingController(text: 'john.smith@email.com');
+
   double _scrollOffset = 0.0;
+  bool _isEditingName = false;
+  String? _profileImagePath;
 
   @override
   void initState() {
@@ -27,169 +33,276 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _nameController.dispose();
+    _emailController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+    if (image != null) {
+      setState(() {
+        _profileImagePath = image.path;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profile photo updated!'),
+            backgroundColor: AppColors.primary,
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
+  void _showEditProfileDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Profile'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _nameController,
+              decoration: const InputDecoration(
+                labelText: 'Name',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _emailController,
+              decoration: const InputDecoration(
+                labelText: 'Email',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              setState(() {});
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Profile updated!'),
+                  backgroundColor: AppColors.primary,
+                  behavior: SnackBarBehavior.floating,
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final double headerOpacity = (_scrollOffset / 100).clamp(0.0, 1.0);
+    // Calculate scroll-based animations (same as saving/withdraw)
+    const double maxHeaderHeight = 220.0;
+    final double headerOpacity = (1 - (_scrollOffset / 150)).clamp(0.0, 1.0);
+    final double headerTranslateY = -(_scrollOffset * 0.5).clamp(0.0, maxHeaderHeight);
     final double borderRadius = (32.0 - (_scrollOffset / 8)).clamp(16.0, 32.0);
 
     return Scaffold(
       backgroundColor: AppColors.primary,
       body: SafeArea(
-        bottom: false,
         child: Stack(
           children: [
-            // Green background
-            Container(
-              color: AppColors.primary,
+            // Header Section (will fade out on scroll)
+            Positioned(
+              top: headerTranslateY,
+              left: 0,
+              right: 0,
+              child: Opacity(
+                opacity: headerOpacity,
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    children: [
+                      // Title
+                      const Text(
+                        'Profile',
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      // Profile photo with edit button
+                      Stack(
+                        children: [
+                          Container(
+                            width: 100,
+                            height: 100,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white,
+                              border: Border.all(
+                                color: Colors.white,
+                                width: 4,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: ClipOval(
+                              child: _profileImagePath != null
+                                  ? const Icon(
+                                      Icons.person,
+                                      size: 60,
+                                      color: AppColors.primary,
+                                    )
+                                  : Icon(
+                                      Icons.person,
+                                      size: 60,
+                                      color: Colors.grey[600],
+                                    ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: GestureDetector(
+                              onTap: _pickImage,
+                              child: Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 2,
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.camera_alt,
+                                  color: Colors.white,
+                                  size: 16,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // User name
+                      Text(
+                        _nameController.text,
+                        style: const TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _emailController.text,
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 14,
+                          color: Colors.white.withOpacity(0.8),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
-            // White card that pulls up
+
+            // Scrollable Content
             CustomScrollView(
               controller: _scrollController,
               slivers: [
+                // Space for header
                 SliverToBoxAdapter(
-                  child: Container(
-                    height: 200,
-                    alignment: Alignment.center,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text(
-                          'Profile',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black,
-                          ),
-                        ),
-                        const SizedBox(height: 40),
-                        // Profile photo
-                        Container(
-                          width: 100,
-                          height: 100,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.grey[300],
-                            border: Border.all(
-                              color: Colors.white,
-                              width: 4,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: ClipOval(
-                            child: Icon(
-                              Icons.person,
-                              size: 60,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  child: SizedBox(height: maxHeaderHeight),
                 ),
+
+                // White Card Content
                 SliverToBoxAdapter(
                   child: Container(
+                    constraints: BoxConstraints(
+                      minHeight: MediaQuery.of(context).size.height - 220,
+                    ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE8F5E3),
+                      color: AppColors.lightBackground,
                       borderRadius: BorderRadius.only(
                         topLeft: Radius.circular(borderRadius),
                         topRight: Radius.circular(borderRadius),
                       ),
                     ),
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 24),
-                        // User name
-                        const Text(
-                          'John Smith',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black,
-                          ),
-                        ),
-                        const SizedBox(height: 32),
-                        // Menu items
-                        _buildMenuItem(
-                          icon: Icons.person_outline,
-                          title: 'Edit Profile',
-                          onTap: () {
-                            // Navigate to edit profile
-                          },
-                        ),
-                        _buildMenuItem(
-                          icon: Icons.shield_outlined,
-                          title: 'History',
-                          onTap: () {
-                            // Navigate to history
-                          },
-                        ),
-                        _buildMenuItem(
-                          icon: Icons.settings_outlined,
-                          title: 'Setting',
-                          onTap: () {
-                            // Navigate to settings
-                          },
-                        ),
-                        _buildMenuItem(
-                          icon: Icons.help_outline,
-                          title: 'Help',
-                          onTap: () {
-                            // Navigate to help
-                          },
-                        ),
-                        _buildMenuItem(
-                          icon: Icons.logout,
-                          title: 'Logout',
-                          onTap: () {
-                            _showLogoutDialog();
-                          },
-                        ),
-                        const SizedBox(height: 100), // Space for bottom navbar
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            // White header overlay
-            IgnorePointer(
-              ignoring: headerOpacity < 0.5,
-              child: Opacity(
-                opacity: headerOpacity,
-                child: Container(
-                  height: 90,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE8F5E3),
-                    borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(borderRadius),
-                      bottomRight: Radius.circular(borderRadius),
-                    ),
-                  ),
-                  child: const Center(
                     child: Padding(
-                      padding: EdgeInsets.only(top: 16),
-                      child: Text(
-                        'Profile',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black,
-                        ),
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Menu items
+                          _buildMenuItem(
+                            icon: Icons.person_outline,
+                            title: 'Edit Profile',
+                            onTap: _showEditProfileDialog,
+                          ),
+                          const SizedBox(height: 12),
+                          _buildMenuItem(
+                            icon: Icons.history,
+                            title: 'History',
+                            onTap: () {
+                              // Navigate to history
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          _buildMenuItem(
+                            icon: Icons.settings_outlined,
+                            title: 'Setting',
+                            onTap: () {
+                              // Navigate to settings
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          _buildMenuItem(
+                            icon: Icons.help_outline,
+                            title: 'Help',
+                            onTap: () {
+                              // Navigate to help
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          _buildMenuItem(
+                            icon: Icons.logout,
+                            title: 'Logout',
+                            onTap: _showLogoutDialog,
+                            isDestructive: true,
+                          ),
+                          const SizedBox(height: 100), // Space for bottom navbar
+                        ],
                       ),
                     ),
                   ),
                 ),
-              ),
+              ],
             ),
           ],
         ),
@@ -201,40 +314,58 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required IconData icon,
     required String title,
     required VoidCallback onTap,
+    bool isDestructive = false,
   }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF5B9CFF),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  icon,
-                  color: Colors.white,
-                  size: 24,
-                ),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: isDestructive
+                    ? Colors.red.withOpacity(0.1)
+                    : AppColors.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
               ),
-              const SizedBox(width: 16),
-              Text(
+              child: Icon(
+                icon,
+                color: isDestructive ? Colors.red : AppColors.primary,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
+                  fontFamily: 'Poppins',
                   fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black,
+                  fontWeight: FontWeight.w600,
+                  color: isDestructive ? Colors.red : AppColors.black,
                 ),
               ),
-            ],
-          ),
+            ),
+            Icon(
+              Icons.chevron_right,
+              color: AppColors.grayText,
+              size: 24,
+            ),
+          ],
         ),
       ),
     );
@@ -255,6 +386,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
             onPressed: () {
               Navigator.pop(context);
               // Implement logout logic
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Logged out successfully'),
+                  backgroundColor: Colors.red,
+                  behavior: SnackBarBehavior.floating,
+                  duration: Duration(seconds: 2),
+                ),
+              );
             },
             child: const Text(
               'Logout',

@@ -115,7 +115,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
                     // Streak Section
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16),
+                      padding: const EdgeInsets.only(left: 24.0, right: 24.0, top: 8, bottom: 4),
                       child: Column(
                         children: [
                           Row(
@@ -170,7 +170,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       ),
                     ),
 
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 20),
                   ],
                 ),
               ),
@@ -240,11 +240,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                                 color: Colors.white.withOpacity(0.2),
                                                 shape: BoxShape.circle,
                                               ),
-                                              child: Center(
-                                                child: Image.asset(
-                                                  'design/Car.png',
-                                                  width: 40,
-                                                  height: 40,
+                                              child: const Center(
+                                                child: Text(
+                                                  '🚗',
+                                                  style: TextStyle(fontSize: 40),
                                                 ),
                                               ),
                                             ),
@@ -360,7 +359,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
                           // Goal Items
                           _buildGoalItem(
-                            icon: 'design/Group.png',
+                            emoji: '📈',
                             title: 'Buy Stock',
                             progress: 0.8, // 80% complete
                             saved: '\$8,000.00',
@@ -368,7 +367,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                           ),
                           const SizedBox(height: 12),
                           _buildGoalItem(
-                            icon: 'design/Salary.png',
+                            emoji: '🏢',
                             title: 'Buy Flat',
                             progress: 0.5, // 50% complete
                             saved: '\$50,000.00',
@@ -376,7 +375,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                           ),
                           const SizedBox(height: 12),
                           _buildGoalItem(
-                            icon: 'design/Group.png',
+                            emoji: '🏡',
                             title: 'Buy House',
                             progress: 0.2, // 20% complete
                             saved: '\$40,000.00',
@@ -419,7 +418,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
             // Floating Action Button with Speed Dial
             Positioned(
-              bottom: 90,
+              bottom: 20,
               right: 24,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -592,7 +591,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   Widget _buildGoalItem({
-    required String icon,
+    required String emoji,
     required String title,
     required double progress,
     required String saved,
@@ -634,10 +633,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               shape: BoxShape.circle,
             ),
             child: Center(
-              child: Image.asset(
-                icon,
-                width: 32,
-                height: 32,
+              child: Text(
+                emoji,
+                style: const TextStyle(fontSize: 32),
               ),
             ),
           ),
@@ -658,21 +656,15 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    Text(
-                      saved,
-                      style: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: color,
-                      ),
-                    ),
-                    Text(
-                      ' / $target',
-                      style: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 13,
-                        color: AppColors.grayText,
+                    Flexible(
+                      child: Text(
+                        '$saved / $target',
+                        style: const TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 13,
+                          color: AppColors.grayText,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],

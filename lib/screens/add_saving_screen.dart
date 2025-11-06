@@ -18,6 +18,10 @@ class AddSavingScreen extends StatefulWidget {
 class _AddSavingScreenState extends State<AddSavingScreen> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _amountController = TextEditingController();
+  final TextEditingController _walletAddressController = TextEditingController();
+  final TextEditingController _cardNumberController = TextEditingController();
+  final TextEditingController _cvcController = TextEditingController();
+  final TextEditingController _expiryController = TextEditingController();
 
   double _scrollOffset = 0.0;
   String _savingMode = 'Lite Mode'; // 'Lite Mode' or 'Pro Mode'
@@ -68,15 +72,21 @@ class _AddSavingScreenState extends State<AddSavingScreen> {
   ];
 
   final List<String> _currencies = [
-    'SOL',
     'USDC',
     'USD',
-    'IDR',
   ];
 
-  final List<String> _paymentMethods = [
-    'Via Wallet',
-    'Via Bank Transfer',
+  final List<Map<String, dynamic>> _paymentMethods = [
+    {
+      'name': 'Wallet',
+      'icon': Icons.account_balance_wallet,
+      'description': 'Connect your crypto wallet',
+    },
+    {
+      'name': 'Mastercard',
+      'icon': Icons.credit_card,
+      'description': 'Pay with your credit card',
+    },
   ];
 
   @override
@@ -97,6 +107,10 @@ class _AddSavingScreenState extends State<AddSavingScreen> {
   void dispose() {
     _scrollController.dispose();
     _amountController.dispose();
+    _walletAddressController.dispose();
+    _cardNumberController.dispose();
+    _cvcController.dispose();
+    _expiryController.dispose();
     super.dispose();
   }
 
@@ -534,45 +548,270 @@ class _AddSavingScreenState extends State<AddSavingScreen> {
 
                           // Payment Method Options
                           ..._paymentMethods.map((method) {
+                            final isSelected = _selectedPaymentMethod == method['name'];
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 12),
                               child: GestureDetector(
                                 onTap: () {
                                   setState(() {
-                                    _selectedPaymentMethod = method;
+                                    _selectedPaymentMethod = method['name'];
                                   });
                                 },
                                 child: Container(
                                   padding: const EdgeInsets.all(16),
                                   decoration: BoxDecoration(
-                                    color: _selectedPaymentMethod == method
-                                        ? AppColors.primary.withOpacity(0.1)
-                                        : const Color(0xFFE8F5E9),
-                                    borderRadius: BorderRadius.circular(12),
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(16),
                                     border: Border.all(
-                                      color: _selectedPaymentMethod == method
+                                      color: isSelected
                                           ? AppColors.primary
                                           : Colors.transparent,
                                       width: 2,
                                     ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: isSelected
+                                            ? AppColors.primary.withOpacity(0.2)
+                                            : Colors.black.withOpacity(0.05),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
                                   ),
-                                  child: Text(
-                                    method,
-                                    style: TextStyle(
-                                      fontFamily: 'Poppins',
-                                      fontSize: 14,
-                                      fontWeight: _selectedPaymentMethod == method
-                                          ? FontWeight.w600
-                                          : FontWeight.w500,
-                                      color: _selectedPaymentMethod == method
-                                          ? AppColors.primary
-                                          : AppColors.black,
-                                    ),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 48,
+                                        height: 48,
+                                        decoration: BoxDecoration(
+                                          color: isSelected
+                                              ? AppColors.primary.withOpacity(0.1)
+                                              : const Color(0xFFE8F5E9),
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: Icon(
+                                          method['icon'],
+                                          color: isSelected
+                                              ? AppColors.primary
+                                              : AppColors.grayText,
+                                          size: 24,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              method['name'],
+                                              style: TextStyle(
+                                                fontFamily: 'Poppins',
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w600,
+                                                color: isSelected
+                                                    ? AppColors.primary
+                                                    : AppColors.black,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              method['description'],
+                                              style: TextStyle(
+                                                fontFamily: 'Poppins',
+                                                fontSize: 12,
+                                                color: AppColors.grayText,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      if (isSelected)
+                                        Icon(
+                                          Icons.check_circle,
+                                          color: AppColors.primary,
+                                          size: 24,
+                                        ),
+                                    ],
                                   ),
                                 ),
                               ),
                             );
                           }).toList(),
+
+                          // Dynamic Payment Form Fields
+                          if (_selectedPaymentMethod != null) ...[
+                            const SizedBox(height: 16),
+                            if (_selectedPaymentMethod == 'Wallet') ...[
+                              const Text(
+                                'Wallet Address',
+                                style: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.black,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              TextField(
+                                controller: _walletAddressController,
+                                style: const TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 14,
+                                  color: AppColors.black,
+                                ),
+                                decoration: InputDecoration(
+                                  hintText: '0x742d35Cc6634C0532925a3b...',
+                                  hintStyle: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontSize: 14,
+                                    color: AppColors.black.withOpacity(0.5),
+                                  ),
+                                  filled: true,
+                                  fillColor: const Color(0xFFE8F5E9),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 16,
+                                  ),
+                                ),
+                              ),
+                            ] else if (_selectedPaymentMethod == 'Mastercard') ...[
+                              const Text(
+                                'Card Number',
+                                style: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.black,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              TextField(
+                                controller: _cardNumberController,
+                                keyboardType: TextInputType.number,
+                                style: const TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 14,
+                                  color: AppColors.black,
+                                ),
+                                decoration: InputDecoration(
+                                  hintText: '1234 5678 9012 3456',
+                                  hintStyle: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontSize: 14,
+                                    color: AppColors.black.withOpacity(0.5),
+                                  ),
+                                  filled: true,
+                                  fillColor: const Color(0xFFE8F5E9),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 16,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'Expiry Date',
+                                          style: TextStyle(
+                                            fontFamily: 'Poppins',
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.black,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        TextField(
+                                          controller: _expiryController,
+                                          keyboardType: TextInputType.datetime,
+                                          style: const TextStyle(
+                                            fontFamily: 'Poppins',
+                                            fontSize: 14,
+                                            color: AppColors.black,
+                                          ),
+                                          decoration: InputDecoration(
+                                            hintText: 'MM/YY',
+                                            hintStyle: TextStyle(
+                                              fontFamily: 'Poppins',
+                                              fontSize: 14,
+                                              color: AppColors.black.withOpacity(0.5),
+                                            ),
+                                            filled: true,
+                                            fillColor: const Color(0xFFE8F5E9),
+                                            border: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(12),
+                                              borderSide: BorderSide.none,
+                                            ),
+                                            contentPadding: const EdgeInsets.symmetric(
+                                              horizontal: 16,
+                                              vertical: 16,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'CVC',
+                                          style: TextStyle(
+                                            fontFamily: 'Poppins',
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.black,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        TextField(
+                                          controller: _cvcController,
+                                          keyboardType: TextInputType.number,
+                                          style: const TextStyle(
+                                            fontFamily: 'Poppins',
+                                            fontSize: 14,
+                                            color: AppColors.black,
+                                          ),
+                                          decoration: InputDecoration(
+                                            hintText: '123',
+                                            hintStyle: TextStyle(
+                                              fontFamily: 'Poppins',
+                                              fontSize: 14,
+                                              color: AppColors.black.withOpacity(0.5),
+                                            ),
+                                            filled: true,
+                                            fillColor: const Color(0xFFE8F5E9),
+                                            border: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(12),
+                                              borderSide: BorderSide.none,
+                                            ),
+                                            contentPadding: const EdgeInsets.symmetric(
+                                              horizontal: 16,
+                                              vertical: 16,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
 
                           const SizedBox(height: 24),
 

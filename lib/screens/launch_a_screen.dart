@@ -14,7 +14,7 @@ class LaunchAScreen extends StatelessWidget {
           children: [
             // Logo Icon
             Image.asset(
-              'design/logo-stacksave.png',
+              'design/logo-white.png',
               width: 120,
               height: 120,
             ),
