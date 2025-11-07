@@ -19,16 +19,17 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
 
   double _scrollOffset = 0.0;
   String _withdrawMethod = 'Crypto Wallet'; // 'Crypto Wallet' or 'Bank'
-  String? _selectedCurrency;
+  String? _selectedCurrency = 'USDC'; // Default to USDC for crypto
 
   final double availableBalance = 7783.00;
 
-  final List<String> _currencies = [
-    'SOL',
-    'USDC',
-    'USD',
-    'IDR',
-  ];
+  // Saving period tracking (dummy data - should come from backend)
+  final int targetDays = 100;
+  final int currentDays = 45; // Change this to test different scenarios
+  bool get isSavingCompleted => currentDays >= targetDays;
+
+  // Currency automatically set based on withdraw method
+  String get currentCurrency => _withdrawMethod == 'Crypto Wallet' ? 'USDC' : 'USD';
 
   @override
   void initState() {
@@ -63,7 +64,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
   }
 
   bool get _canWithdraw {
-    if (_amountController.text.isEmpty || _selectedCurrency == null) {
+    if (_amountController.text.isEmpty) {
       return false;
     }
     if (_withdrawAmount <= 0 || _withdrawAmount > availableBalance) {
@@ -91,7 +92,422 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
       return;
     }
 
-    // Show confirmation dialog
+    // Check if saving period is completed
+    if (!isSavingCompleted) {
+      _showEarlyWithdrawalWarning();
+    } else {
+      _showCongratulationsDialog();
+    }
+  }
+
+  void _showEarlyWithdrawalWarning() {
+    final daysRemaining = targetDays - currentDays;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Row(
+          children: [
+            Icon(
+              Icons.warning_amber_rounded,
+              color: Colors.orange,
+              size: 28,
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Early Withdrawal',
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w600,
+                fontSize: 18,
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'You are withdrawing before reaching your target saving period.',
+              style: const TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.orange.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.orange.withOpacity(0.3)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.access_time, size: 16, color: Colors.orange),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Progress: $currentDays / $targetDays days',
+                        style: const TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Days remaining: $daysRemaining days',
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 12,
+                      color: Colors.grey[700],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.red.withOpacity(0.3)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, size: 16, color: Colors.red),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Early withdrawal may incur a penalty fee',
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 12,
+                        color: Colors.red[700],
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(fontFamily: 'Poppins'),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _showWithdrawalConfirmation();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text(
+              'Continue Anyway',
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCongratulationsDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Celebration icon
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Center(
+                child: Text(
+                  '🎉',
+                  style: TextStyle(fontSize: 48),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Congratulations!',
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'You\'ve completed your $targetDays days saving goal!',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 14,
+                color: AppColors.grayText,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                children: [
+                  const Text(
+                    'Total Saved',
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 12,
+                      color: AppColors.grayText,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '\$${availableBalance.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _showDonationOption();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text(
+                'Continue to Withdraw',
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDonationOption() {
+    final TextEditingController donationController = TextEditingController();
+    bool wantsToDonate = false;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            'Make a Difference',
+            style: TextStyle(
+              fontFamily: 'Poppins',
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Would you like to donate a portion of your savings to charity?',
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 16),
+              CheckboxListTile(
+                value: wantsToDonate,
+                onChanged: (value) {
+                  setDialogState(() {
+                    wantsToDonate = value ?? false;
+                  });
+                },
+                title: const Text(
+                  'Yes, I want to donate',
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 14,
+                  ),
+                ),
+                contentPadding: EdgeInsets.zero,
+                controlAffinity: ListTileControlAffinity.leading,
+              ),
+              if (wantsToDonate) ...[
+                const SizedBox(height: 12),
+                const Text(
+                  'Donation Amount',
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: donationController,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: InputDecoration(
+                    hintText: '\$10.00',
+                    prefixIcon: const Icon(Icons.favorite, color: Colors.red),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    _buildQuickDonationButton(donationController, setDialogState, '1%'),
+                    const SizedBox(width: 8),
+                    _buildQuickDonationButton(donationController, setDialogState, '5%'),
+                    const SizedBox(width: 8),
+                    _buildQuickDonationButton(donationController, setDialogState, '10%'),
+                  ],
+                ),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                _showWithdrawalConfirmation(donationAmount: 0);
+              },
+              child: const Text(
+                'Skip',
+                style: TextStyle(fontFamily: 'Poppins'),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                double donationAmount = 0;
+                if (wantsToDonate && donationController.text.isNotEmpty) {
+                  donationAmount = double.tryParse(donationController.text) ?? 0;
+                }
+                Navigator.pop(dialogContext);
+                _showWithdrawalConfirmation(donationAmount: donationAmount);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text(
+                'Continue',
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickDonationButton(
+    TextEditingController controller,
+    StateSetter setDialogState,
+    String label,
+  ) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          final percentage = int.parse(label.replaceAll('%', '')) / 100;
+          final amount = availableBalance * percentage;
+          setDialogState(() {
+            controller.text = amount.toStringAsFixed(2);
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: AppColors.primary.withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showWithdrawalConfirmation({double donationAmount = 0}) {
+    final double finalAmount = _withdrawAmount - donationAmount;
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -110,11 +526,29 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Amount: \$${_withdrawAmount.toStringAsFixed(2)}',
+              'Withdrawal Amount: \$${_withdrawAmount.toStringAsFixed(2)}',
               style: const TextStyle(fontFamily: 'Poppins'),
             ),
+            if (donationAmount > 0) ...[
+              Text(
+                'Donation: -\$${donationAmount.toStringAsFixed(2)}',
+                style: const TextStyle(
+                  fontFamily: 'Poppins',
+                  color: Colors.red,
+                ),
+              ),
+              const Divider(height: 16),
+              Text(
+                'Final Amount: \$${finalAmount.toStringAsFixed(2)}',
+                style: const TextStyle(
+                  fontFamily: 'Poppins',
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
             Text(
-              'Currency: $_selectedCurrency',
+              'Currency: $currentCurrency',
               style: const TextStyle(fontFamily: 'Poppins'),
             ),
             Text(
@@ -144,7 +578,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              _processWithdrawal();
+              _processWithdrawal(donationAmount: donationAmount);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
@@ -165,13 +599,20 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
     );
   }
 
-  void _processWithdrawal() {
+  void _processWithdrawal({double donationAmount = 0}) {
+    final double finalAmount = _withdrawAmount - donationAmount;
+    String message = 'Withdrawal of \$${finalAmount.toStringAsFixed(2)} processing!';
+
+    if (donationAmount > 0) {
+      message = 'Withdrawal of \$${finalAmount.toStringAsFixed(2)} processing!\nDonation of \$${donationAmount.toStringAsFixed(2)} will be sent to charity. Thank you! ❤️';
+    }
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Withdrawal of \$${_withdrawAmount.toStringAsFixed(2)} processing!'),
+        content: Text(message),
         backgroundColor: AppColors.primary,
         behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
+        duration: const Duration(seconds: 3),
       ),
     );
 
@@ -448,7 +889,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
 
                           const SizedBox(height: 20),
 
-                          // Currency
+                          // Currency (auto-set based on method)
                           const Text(
                             'Currency',
                             style: TextStyle(
@@ -460,41 +901,49 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
                           ),
                           const SizedBox(height: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                             decoration: BoxDecoration(
                               color: const Color(0xFFE8F5E9),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<String>(
-                                value: _selectedCurrency,
-                                hint: Text(
-                                  'Select currency',
-                                  style: TextStyle(
+                            child: Row(
+                              children: [
+                                Icon(
+                                  _withdrawMethod == 'Crypto Wallet'
+                                      ? Icons.currency_bitcoin
+                                      : Icons.attach_money,
+                                  color: AppColors.primary,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  currentCurrency,
+                                  style: const TextStyle(
                                     fontFamily: 'Poppins',
                                     fontSize: 14,
-                                    color: AppColors.grayText,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.black,
                                   ),
                                 ),
-                                isExpanded: true,
-                                icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.primary),
-                                style: const TextStyle(
-                                  fontFamily: 'Poppins',
-                                  fontSize: 14,
-                                  color: AppColors.black,
+                                const Spacer(),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    'Auto',
+                                    style: TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
                                 ),
-                                items: _currencies.map((currency) {
-                                  return DropdownMenuItem<String>(
-                                    value: currency,
-                                    child: Text(currency),
-                                  );
-                                }).toList(),
-                                onChanged: (String? newValue) {
-                                  setState(() {
-                                    _selectedCurrency = newValue;
-                                  });
-                                },
-                              ),
+                              ],
                             ),
                           ),
 

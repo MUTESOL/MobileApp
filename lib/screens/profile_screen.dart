@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:stacksave/constants/colors.dart';
+import 'package:stacksave/services/wallet_service.dart';
 import 'package:image_picker/image_picker.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -113,7 +116,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     // Calculate scroll-based animations (same as saving/withdraw)
-    const double maxHeaderHeight = 220.0;
+    const double maxHeaderHeight = 260.0; // Increased to accommodate wallet address
     final double headerOpacity = (1 - (_scrollOffset / 150)).clamp(0.0, 1.0);
     final double headerTranslateY = -(_scrollOffset * 0.5).clamp(0.0, maxHeaderHeight);
     final double borderRadius = (32.0 - (_scrollOffset / 8)).clamp(16.0, 32.0);
@@ -207,24 +210,60 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ],
                       ),
                       const SizedBox(height: 16),
-                      // User name
-                      Text(
-                        _nameController.text,
-                        style: const TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _emailController.text,
-                        style: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 14,
-                          color: Colors.white.withOpacity(0.8),
-                        ),
+                      // Wallet Address
+                      Consumer<WalletService>(
+                        builder: (context, walletService, _) {
+                          return GestureDetector(
+                            onTap: () {
+                              if (walletService.walletAddress != null) {
+                                Clipboard.setData(ClipboardData(text: walletService.walletAddress!));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Wallet address copied!'),
+                                    backgroundColor: AppColors.primary,
+                                    behavior: SnackBarBehavior.floating,
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              }
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.account_balance_wallet,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    walletService.shortenedAddress,
+                                    style: const TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  if (walletService.isConnected) ...[
+                                    const SizedBox(width: 8),
+                                    const Icon(
+                                      Icons.copy,
+                                      color: Colors.white,
+                                      size: 14,
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -245,7 +284,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 SliverToBoxAdapter(
                   child: Container(
                     constraints: BoxConstraints(
-                      minHeight: MediaQuery.of(context).size.height - 220,
+                      minHeight: MediaQuery.of(context).size.height - 260,
                     ),
                     decoration: BoxDecoration(
                       color: AppColors.lightBackground,
@@ -270,15 +309,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             icon: Icons.history,
                             title: 'History',
                             onTap: () {
-                              // Navigate to history
-                            },
-                          ),
-                          const SizedBox(height: 12),
-                          _buildMenuItem(
-                            icon: Icons.settings_outlined,
-                            title: 'Setting',
-                            onTap: () {
-                              // Navigate to settings
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('History feature coming soon!'),
+                                  backgroundColor: AppColors.primary,
+                                  behavior: SnackBarBehavior.floating,
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
                             },
                           ),
                           const SizedBox(height: 12),
@@ -286,7 +324,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             icon: Icons.help_outline,
                             title: 'Help',
                             onTap: () {
-                              // Navigate to help
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Help feature coming soon!'),
+                                  backgroundColor: AppColors.primary,
+                                  behavior: SnackBarBehavior.floating,
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
                             },
                           ),
                           const SizedBox(height: 12),

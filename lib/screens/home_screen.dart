@@ -76,7 +76,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 opacity: headerOpacity,
                 child: Column(
                   children: [
-                    // Header
+                    // Header (logo only)
                     Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Row(
@@ -87,28 +87,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                             height: 48,
                             color: Colors.white,
                           ),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const NotificationScreen(),
-                                ),
-                              );
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.notifications_outlined,
-                                color: AppColors.primary,
-                                size: 24,
-                              ),
-                            ),
-                          ),
+                          // Spacer for notification button (positioned separately)
+                          const SizedBox(width: 48),
                         ],
                       ),
                     ),
@@ -414,6 +394,37 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   ),
                 ),
               ],
+            ),
+
+            // Notification Button (fades with header but always clickable)
+            Positioned(
+              top: 16,
+              right: 16,
+              child: Opacity(
+                opacity: headerOpacity,
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const NotificationScreen(),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.notifications_outlined,
+                      color: AppColors.primary,
+                      size: 24,
+                    ),
+                  ),
+                ),
+              ),
             ),
 
             // Floating Action Button with Speed Dial
