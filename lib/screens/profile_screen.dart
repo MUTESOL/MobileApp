@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:stacksave/constants/colors.dart';
 import 'package:stacksave/services/wallet_service.dart';
+import 'package:stacksave/screens/donation_settings_screen.dart';
 import 'package:image_picker/image_picker.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -303,6 +304,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             icon: Icons.person_outline,
                             title: 'Edit Profile',
                             onTap: _showEditProfileDialog,
+                          ),
+                          const SizedBox(height: 12),
+                          _buildMenuItem(
+                            icon: Icons.volunteer_activism,
+                            title: 'Donation Settings',
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const DonationSettingsScreen(),
+                                ),
+                              );
+                            },
                           ),
                           const SizedBox(height: 12),
                           _buildMenuItem(

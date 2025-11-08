@@ -176,7 +176,7 @@ class _PortfolioScreenState extends State<PortfolioScreen> {
       final apiService = ApiService();
       final response = await apiService.getUserGoals(walletService.walletAddress!);
 
-      final goalsData = response['goals'] as List;
+      final goalsData = response['data']['goals'] as List;
       final goals = goalsData.map((json) => GoalModel.fromJson(json)).toList();
 
       setState(() {

@@ -222,4 +222,66 @@ class ApiService {
         return error.message ?? 'Unknown error occurred';
     }
   }
+
+  /// Get all public goods projects
+  /// GET /projects
+  Future<Map<String, dynamic>> getProjects({
+    String? category,
+    String? search,
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{};
+      if (category != null) queryParams['category'] = category;
+      if (search != null) queryParams['search'] = search;
+
+      final response = await _dio.get('/projects', queryParameters: queryParams);
+      return _handleResponse(response);
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  /// Get project categories
+  /// GET /projects/categories
+  Future<Map<String, dynamic>> getProjectCategories() async {
+    try {
+      final response = await _dio.get('/projects/categories');
+      return _handleResponse(response);
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  /// Get project by ID
+  /// GET /projects/:id
+  Future<Map<String, dynamic>> getProjectById(String id) async {
+    try {
+      final response = await _dio.get('/projects/$id');
+      return _handleResponse(response);
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  /// Get project by address
+  /// GET /projects/address/:address
+  Future<Map<String, dynamic>> getProjectByAddress(String address) async {
+    try {
+      final response = await _dio.get('/projects/address/$address');
+      return _handleResponse(response);
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  /// Validate if address is an approved project
+  /// GET /projects/validate/:address
+  Future<Map<String, dynamic>> validateProject(String address) async {
+    try {
+      final response = await _dio.get('/projects/validate/$address');
+      return _handleResponse(response);
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
 }

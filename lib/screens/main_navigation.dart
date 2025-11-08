@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:stacksave/constants/colors.dart';
 import 'package:stacksave/screens/home_screen.dart';
 import 'package:stacksave/screens/portfolio_screen.dart';
-import 'package:stacksave/screens/add_saving_screen.dart';
-import 'package:stacksave/screens/withdraw_screen.dart';
+import 'package:stacksave/screens/saving_screen.dart';
+import 'package:stacksave/screens/discover_screen.dart';
 import 'package:stacksave/screens/profile_screen.dart';
 
 class MainNavigation extends StatefulWidget {
@@ -25,11 +25,11 @@ class _MainNavigationState extends State<MainNavigation> {
   }
 
   final List<Widget> _pages = [
-    const HomeScreen(showNavBar: false),
-    const PortfolioScreen(showNavBar: false),
-    const AddSavingScreen(showNavBar: false, fromNavBar: true),
-    const WithdrawScreen(showNavBar: false),
-    const ProfileScreen(showNavBar: false),
+    const HomeScreen(showNavBar: false),       // 0: Home
+    const PortfolioScreen(showNavBar: false),  // 1: Portfolio
+    const SavingScreen(),                      // 2: Saving (Add + Withdraw)
+    const DiscoverScreen(),                    // 3: Discover Projects
+    const ProfileScreen(showNavBar: false),    // 4: Profile
   ];
 
   @override
@@ -51,11 +51,11 @@ class _MainNavigationState extends State<MainNavigation> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildNavItem(Icons.home, 0),
-            _buildNavItem(Icons.pie_chart_outline, 1),
-            _buildNavItem(Icons.layers, 2),
-            _buildNavItem(Icons.swap_horiz, 3),
-            _buildNavItem(Icons.person_outline, 4),
+            _buildNavItem(Icons.home, 0),                    // Home
+            _buildNavItem(Icons.pie_chart_outline, 1),       // Portfolio
+            _buildNavItem(Icons.account_balance_wallet, 2),  // Saving
+            _buildNavItem(Icons.explore, 3),                 // Discover
+            _buildNavItem(Icons.person_outline, 4),          // Profile
           ],
         ),
       ),

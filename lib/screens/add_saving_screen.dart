@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:visibility_detector/visibility_detector.dart';
 import 'package:stacksave/constants/colors.dart';
 import 'package:stacksave/services/api_service.dart';
 import 'package:stacksave/services/wallet_service.dart';
@@ -29,14 +30,11 @@ class _AddSavingScreenState extends State<AddSavingScreen> {
   double _scrollOffset = 0.0;
   String _savingMode = 'Lite Mode'; // 'Lite Mode' or 'Pro Mode'
   int? _selectedGoalId; // Changed to int goalId
-  String? _selectedCurrency;
   String? _selectedPaymentMethod;
 
   // Real-time data from backend
   List<Map<String, dynamic>> _realGoals = [];
-  List<Map<String, dynamic>> _supportedCurrencies = [];
   bool _isLoadingGoals = true;
-  bool _isLoadingCurrencies = true;
 
   // Get mode info
   Map<String, dynamic> get _modeInfo {
@@ -100,54 +98,48 @@ class _AddSavingScreenState extends State<AddSavingScreen> {
     });
     // Fetch real data from backend
     _loadUserGoals();
-    _loadSupportedCurrencies();
   }
 
   // Fetch user's goals from database
   Future<void> _loadUserGoals() async {
     final walletService = context.read<WalletService>();
+
+    print('🔍 AddSaving: Loading goals...');
+    print('🔍 AddSaving: Wallet address: ${walletService.walletAddress}');
+
     if (walletService.walletAddress == null) {
+      print('❌ AddSaving: Wallet address is null');
       setState(() => _isLoadingGoals = false);
       return;
     }
 
     try {
       final apiService = ApiService();
+      print('📡 AddSaving: Calling API with address: ${walletService.walletAddress}');
       final response = await apiService.getUserGoals(walletService.walletAddress!);
+
+      print('✅ AddSaving: API Response: $response');
 
       if (response['success'] == true) {
         final data = response['data'];
         if (data != null && data['goals'] != null) {
+          final goalsList = List<Map<String, dynamic>>.from(data['goals']);
+          print('✅ AddSaving: Found ${goalsList.length} goals');
           setState(() {
-            _realGoals = List<Map<String, dynamic>>.from(data['goals']);
+            _realGoals = goalsList;
             _isLoadingGoals = false;
           });
+        } else {
+          print('⚠️ AddSaving: No goals data in response');
+          setState(() => _isLoadingGoals = false);
         }
+      } else {
+        print('⚠️ AddSaving: API returned success=false');
+        setState(() => _isLoadingGoals = false);
       }
     } catch (e) {
-      print('Error loading goals: $e');
+      print('❌ AddSaving Error loading goals: $e');
       setState(() => _isLoadingGoals = false);
-    }
-  }
-
-  // Fetch supported currencies with APY
-  Future<void> _loadSupportedCurrencies() async {
-    try {
-      final apiService = ApiService();
-      final response = await apiService.getSupportedCurrencies();
-
-      if (response['success'] == true) {
-        final data = response['data'];
-        if (data != null && data['currencies'] != null) {
-          setState(() {
-            _supportedCurrencies = List<Map<String, dynamic>>.from(data['currencies']);
-            _isLoadingCurrencies = false;
-          });
-        }
-      }
-    } catch (e) {
-      print('Error loading currencies: $e');
-      setState(() => _isLoadingCurrencies = false);
     }
   }
 
@@ -165,7 +157,6 @@ class _AddSavingScreenState extends State<AddSavingScreen> {
   Future<void> _proceed() async {
     // Validation
     if (_selectedGoalId == null ||
-        _selectedCurrency == null ||
         _amountController.text.isEmpty ||
         _selectedPaymentMethod == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -267,9 +258,17 @@ class _AddSavingScreenState extends State<AddSavingScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.primary,
-      body: SafeArea(
-        child: Stack(
-          children: [
+      body: VisibilityDetector(
+        key: const Key('add-saving-screen'),
+        onVisibilityChanged: (info) {
+          // Reload goals when screen becomes visible (>50% visible)
+          if (info.visibleFraction > 0.5 && mounted) {
+            _loadUserGoals();
+          }
+        },
+        child: SafeArea(
+          child: Stack(
+            children: [
             // Header (will fade out on scroll)
             Positioned(
               top: headerTranslateY,
@@ -295,9 +294,11 @@ class _AddSavingScreenState extends State<AddSavingScreen> {
             ),
 
             // Form Container (scrollable white card)
-            CustomScrollView(
-              controller: _scrollController,
-              slivers: [
+            RefreshIndicator(
+              onRefresh: _loadUserGoals,
+              child: CustomScrollView(
+                controller: _scrollController,
+                slivers: [
                 // Space for header
                 SliverToBoxAdapter(
                   child: SizedBox(height: maxHeaderHeight),
@@ -449,72 +450,6 @@ class _AddSavingScreenState extends State<AddSavingScreen> {
                                       onChanged: (int? newValue) {
                                         setState(() {
                                           _selectedGoalId = newValue;
-                                        });
-                                      },
-                                    ),
-                            ),
-                          ),
-
-                          const SizedBox(height: 20),
-
-                          // Currency
-                          const Text(
-                            'Currency',
-                            style: TextStyle(
-                              fontFamily: 'Poppins',
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.black,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFE8F5E9),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: DropdownButtonHideUnderline(
-                              child: _isLoadingCurrencies
-                                  ? const Center(child: CircularProgressIndicator())
-                                  : DropdownButton<String>(
-                                      value: _selectedCurrency,
-                                      hint: Text(
-                                        _supportedCurrencies.isEmpty ? 'No currencies available' : 'Select currency',
-                                        style: TextStyle(
-                                          fontFamily: 'Poppins',
-                                          fontSize: 14,
-                                          color: AppColors.grayText,
-                                        ),
-                                      ),
-                                      isExpanded: true,
-                                      icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.primary),
-                                      style: const TextStyle(
-                                        fontFamily: 'Poppins',
-                                        fontSize: 14,
-                                        color: AppColors.black,
-                                      ),
-                                      items: _supportedCurrencies.map((currency) {
-                                        final address = currency['address'] as String;
-                                        // Map address to token symbol for display
-                                        String symbol = 'UNKNOWN';
-                                        if (address.toLowerCase() == '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48') {
-                                          symbol = 'USDC';
-                                        } else if (address.toLowerCase() == '0x6b175474e89094c44da98b954eedeac495271d0f') {
-                                          symbol = 'DAI';
-                                        } else if (address.toLowerCase() == '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2') {
-                                          symbol = 'WETH';
-                                        }
-                                        final liteAPY = currency['liteAPY'] ?? 0;
-                                        final proAPY = currency['proAPY'] ?? 0;
-                                        return DropdownMenuItem<String>(
-                                          value: address,
-                                          child: Text('$symbol (Lite: ${liteAPY}% | Pro: ${proAPY}%)'),
-                                        );
-                                      }).toList(),
-                                      onChanged: (String? newValue) {
-                                        setState(() {
-                                          _selectedCurrency = newValue;
                                         });
                                       },
                                     ),
@@ -975,10 +910,12 @@ class _AddSavingScreenState extends State<AddSavingScreen> {
                     ),
                   ),
                 ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
+      ),
       ),
     );
   }

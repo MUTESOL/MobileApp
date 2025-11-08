@@ -19,13 +19,7 @@ class _AddGoalsScreenState extends State<AddGoalsScreen> {
   final TextEditingController _descriptionController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
-  String? _selectedCurrency;
   double _scrollOffset = 0.0;
-
-  final List<Map<String, String>> _currencies = [
-    {'code': 'USDC', 'name': 'USD Coin', 'symbol': 'USDC'},
-    {'code': 'USD', 'name': 'US Dollar', 'symbol': 'USD'},
-  ];
 
   @override
   void initState() {
@@ -50,12 +44,11 @@ class _AddGoalsScreenState extends State<AddGoalsScreen> {
   Future<void> _saveGoal() async {
     // Validation
     if (_goalNameController.text.isEmpty ||
-        _selectedCurrency == null ||
         _targetAmountController.text.isEmpty ||
         _timeFrameController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please fill in all required fields'),
+          content: Text('Please fill in all fields'),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
         ),
@@ -88,27 +81,43 @@ class _AddGoalsScreenState extends State<AddGoalsScreen> {
       final walletService = context.read<WalletService>();
       final apiService = ApiService();
 
-      // Map currency to token address
-      const currencyAddresses = {
-        'USDC': '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-        'DAI': '0x6B175474E89094C44Da98b954EedeAC495271d0F',
-        'WETH': '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
-      };
-
-      final currencyAddress = currencyAddresses[_selectedCurrency] ??
-          currencyAddresses['USDC']!;
+      // Use default currency (USDC)
+      const defaultCurrencyAddress = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'; // USDC
 
       // Parse timeframe to days
       final durationInDays = int.tryParse(_timeFrameController.text) ?? 90;
+
+      // Validate and convert target amount to wei format
+      double targetAmountDouble;
+      try {
+        targetAmountDouble = double.parse(_targetAmountController.text);
+        if (targetAmountDouble <= 0) {
+          throw Exception('Amount must be greater than 0');
+        }
+      } catch (e) {
+        Navigator.pop(context); // Close loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please enter a valid target amount'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      // Convert to wei format (USDC uses 6 decimals)
+      final targetAmountWei = (targetAmountDouble * 1e6).toStringAsFixed(0);
+
+      print('📝 DEBUG: Target amount: $targetAmountDouble USDC = $targetAmountWei wei');
 
       // Create goal via API
       print('📝 DEBUG: Creating goal with address: ${walletService.walletAddress}');
       final result = await apiService.createGoal(
         name: _goalNameController.text,
         owner: walletService.walletAddress ?? '0x0000000000000000000000000000000000000000',
-        currency: currencyAddress,
+        currency: defaultCurrencyAddress,
         mode: 0, // 0 = Lite Mode, 1 = Pro Mode
-        targetAmount: _targetAmountController.text,
+        targetAmount: targetAmountWei,
         durationInDays: durationInDays,
         donationPercentage: 500, // 5% donation
       );
@@ -298,59 +307,7 @@ class _AddGoalsScreenState extends State<AddGoalsScreen> {
 
                       const SizedBox(height: 20),
 
-                      // Currency
-                      const Text(
-                        'Currency',
-                        style: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.black,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE8F5E9),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: _selectedCurrency,
-                            hint: Text(
-                              'Select currency',
-                              style: TextStyle(
-                                fontFamily: 'Poppins',
-                                fontSize: 14,
-                                color: AppColors.grayText,
-                              ),
-                            ),
-                            isExpanded: true,
-                            icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.primary),
-                            style: const TextStyle(
-                              fontFamily: 'Poppins',
-                              fontSize: 14,
-                              color: AppColors.black,
-                            ),
-                            items: _currencies.map((currency) {
-                              return DropdownMenuItem<String>(
-                                value: currency['code'],
-                                child: Text('${currency['name']} (${currency['symbol']})'),
-                              );
-                            }).toList(),
-                            onChanged: (String? newValue) {
-                              setState(() {
-                                _selectedCurrency = newValue;
-                              });
-                            },
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      // Target Amount
+                      // Target Amount (in USDC)
                       const Text(
                         'Target Amount',
                         style: TextStyle(
@@ -370,9 +327,7 @@ class _AddGoalsScreenState extends State<AddGoalsScreen> {
                           color: AppColors.black,
                         ),
                         decoration: InputDecoration(
-                          hintText: _selectedCurrency != null
-                            ? '${_getCurrencySymbol(_selectedCurrency!)}3.53'
-                            : '\$3.53',
+                          hintText: '\$100',
                           hintStyle: TextStyle(
                             fontFamily: 'Poppins',
                             fontSize: 14,

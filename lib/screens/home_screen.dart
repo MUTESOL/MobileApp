@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:visibility_detector/visibility_detector.dart';
 import 'package:stacksave/constants/colors.dart';
 import 'package:stacksave/screens/add_goals_screen.dart';
 import 'package:stacksave/screens/add_saving_screen.dart';
+import 'package:stacksave/screens/discover_screen.dart';
 import 'package:stacksave/screens/notification_screen.dart';
 import 'package:stacksave/screens/portfolio_screen.dart';
 import 'package:stacksave/screens/profile_screen.dart';
@@ -138,9 +140,17 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
     return Scaffold(
       backgroundColor: AppColors.primary,
-      body: SafeArea(
-        child: Stack(
-          children: [
+      body: VisibilityDetector(
+        key: const Key('home-screen'),
+        onVisibilityChanged: (info) {
+          // Reload goals when screen becomes visible (>50% visible)
+          if (info.visibleFraction > 0.5 && mounted) {
+            _loadGoals();
+          }
+        },
+        child: SafeArea(
+          child: Stack(
+            children: [
             // Header and Streak Section (will fade out on scroll)
             Positioned(
               top: headerTranslateY,
@@ -223,9 +233,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             ),
 
             // Main Content Area (scrollable white card)
-            CustomScrollView(
-              controller: _scrollController,
-              slivers: [
+            RefreshIndicator(
+              onRefresh: _loadGoals,
+              child: CustomScrollView(
+                controller: _scrollController,
+                slivers: [
                 // Space for header
                 SliverToBoxAdapter(
                   child: SizedBox(height: maxHeaderHeight),
@@ -436,6 +448,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
                           const SizedBox(height: 24),
 
+                          // Donation Banner
+                          _buildDonationBanner(),
+
+                          const SizedBox(height: 24),
+
                           // Other Goals - Show if there are more than 1 goal
                           if (_goals.length > 1) const Text(
                             'Other Goals',
@@ -456,7 +473,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                               child: Container(
                                 key: ValueKey('goal_${_goals[i].id}'),
                                 child: _buildGoalItem(
-                                  icon: 'design/Group.png',
+                                  emoji: 'design/Group.png',
                                   title: _goals[i].name,
                                   progress: _goals[i].progress,
                                   saved: '\$${_goals[i].depositedAmountDouble.toStringAsFixed(2)}',
@@ -497,7 +514,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     ),
                   ),
                 ),
-              ],
+                ],
+              ),
             ),
 
             // Notification Button (fades with header but always clickable)
@@ -699,7 +717,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   ),
                 ),
               ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -875,6 +894,76 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDonationBanner() {
+    // Default donation settings
+    final donationPercentage = _goals.isNotEmpty
+        ? (_goals[0].donationPercentage / 100).toStringAsFixed(0)
+        : '5';
+    final projectCount = 1; // Default: Octant General Pool
+
+    return GestureDetector(
+      onTap: () {
+        // Navigate to Discover screen
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const DiscoverScreen()),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppColors.primary.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppColors.primary.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.info_outline,
+              color: AppColors.primary,
+              size: 20,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'You\'re donating $donationPercentage% of yield to $projectCount public goods project${projectCount > 1 ? 's' : ''}.',
+                style: const TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 13,
+                  color: AppColors.black,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: const [
+                Text(
+                  'Manage',
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
+                  ),
+                ),
+                SizedBox(width: 4),
+                Icon(
+                  Icons.arrow_forward,
+                  color: AppColors.primary,
+                  size: 16,
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
