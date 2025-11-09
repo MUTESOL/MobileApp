@@ -1,0 +1,48 @@
+{
+  "root": "./docs",
+  "title": "StackSave Documentation",
+  "description": "Complete documentation for StackSave - A decentralized savings application",
+  "author": "StackSave Team",
+  "language": "en",
+  "gitbook": ">=3.2.0",
+  "structure": {
+    "readme": "README.md",
+    "summary": "SUMMARY.md"
+  },
+  "plugins": [
+    "search",
+    "expandable-chapters",
+    "copy-code-button",
+    "github",
+    "edit-link",
+    "back-to-top-button",
+    "-lunr",
+    "-search",
+    "search-plus",
+    "prism",
+    "-highlight"
+  ],
+  "pluginsConfig": {
+    "github": {
+      "url": "https://github.com/yourusername/stacksave"
+    },
+    "edit-link": {
+      "base": "https://github.com/yourusername/stacksave/edit/main/docs",
+      "label": "Edit This Page"
+    },
+    "prism": {
+      "css": [
+        "prismjs/themes/prism-tomorrow.css"
+      ],
+      "lang": {
+        "dart": "dart",
+        "yaml": "yaml",
+        "bash": "bash",
+        "json": "json"
+      }
+    }
+  },
+  "styles": {
+    "website": "styles/website.css"
+  }
+}

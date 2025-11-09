@@ -1,0 +1,15 @@
+# GitBook Configuration
+
+# Documentation root directory
+root: ./docs/
+
+# Table of contents file
+summary: SUMMARY.md
+
+# Main README file
+readme: ../README.md
+
+# GitBook structure version
+structure:
+  readme: ../README.md
+  summary: SUMMARY.md

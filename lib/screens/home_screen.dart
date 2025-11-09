@@ -76,7 +76,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 opacity: headerOpacity,
                 child: Column(
                   children: [
-                    // Header (logo only)
+                    // Header
                     Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Row(
@@ -87,15 +87,35 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                             height: 48,
                             color: Colors.white,
                           ),
-                          // Spacer for notification button (positioned separately)
-                          const SizedBox(width: 48),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const NotificationScreen(),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.notifications_outlined,
+                                color: AppColors.primary,
+                                size: 24,
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
 
                     // Streak Section
                     Padding(
-                      padding: const EdgeInsets.only(left: 24.0, right: 24.0, top: 8, bottom: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16),
                       child: Column(
                         children: [
                           Row(
@@ -150,7 +170,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       ),
                     ),
 
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 8),
                   ],
                 ),
               ),
@@ -220,10 +240,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                                 color: Colors.white.withOpacity(0.2),
                                                 shape: BoxShape.circle,
                                               ),
-                                              child: const Center(
-                                                child: Text(
-                                                  '🚗',
-                                                  style: TextStyle(fontSize: 40),
+                                              child: Center(
+                                                child: Image.asset(
+                                                  'design/Car.png',
+                                                  width: 40,
+                                                  height: 40,
                                                 ),
                                               ),
                                             ),
@@ -339,7 +360,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
                           // Goal Items
                           _buildGoalItem(
-                            emoji: '📈',
+                            icon: 'design/Group.png',
                             title: 'Buy Stock',
                             progress: 0.8, // 80% complete
                             saved: '\$8,000.00',
@@ -347,7 +368,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                           ),
                           const SizedBox(height: 12),
                           _buildGoalItem(
-                            emoji: '🏢',
+                            icon: 'design/Salary.png',
                             title: 'Buy Flat',
                             progress: 0.5, // 50% complete
                             saved: '\$50,000.00',
@@ -355,7 +376,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                           ),
                           const SizedBox(height: 12),
                           _buildGoalItem(
-                            emoji: '🏡',
+                            icon: 'design/Group.png',
                             title: 'Buy House',
                             progress: 0.2, // 20% complete
                             saved: '\$40,000.00',
@@ -377,11 +398,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
                           const SizedBox(height: 16),
 
-                          // USDC Faucet Card
+                          // Faucet Cards
+                          const SizedBox(height: 12),
                           _buildFaucetCard(
                             title: 'USDC Faucet',
                             description: 'Get free USDC tokens for testing',
-                            amount: '100 USDC',
+                            amount: '10 USDC',
                             color: const Color(0xFF0052CC),
                             icon: Icons.account_balance_wallet,
                             tokenType: 'USDC',
@@ -396,40 +418,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               ],
             ),
 
-            // Notification Button (fades with header but always clickable)
-            Positioned(
-              top: 16,
-              right: 16,
-              child: Opacity(
-                opacity: headerOpacity,
-                child: GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const NotificationScreen(),
-                      ),
-                    );
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.notifications_outlined,
-                      color: AppColors.primary,
-                      size: 24,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
             // Floating Action Button with Speed Dial
             Positioned(
-              bottom: 20,
+              bottom: 90,
               right: 24,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -602,7 +593,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   Widget _buildGoalItem({
-    required String emoji,
+    required String icon,
     required String title,
     required double progress,
     required String saved,
@@ -644,9 +635,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               shape: BoxShape.circle,
             ),
             child: Center(
-              child: Text(
-                emoji,
-                style: const TextStyle(fontSize: 32),
+              child: Image.asset(
+                icon,
+                width: 32,
+                height: 32,
               ),
             ),
           ),
@@ -667,15 +659,21 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    Flexible(
-                      child: Text(
-                        '$saved / $target',
-                        style: const TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 13,
-                          color: AppColors.grayText,
-                        ),
-                        overflow: TextOverflow.ellipsis,
+                    Text(
+                      saved,
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: color,
+                      ),
+                    ),
+                    Text(
+                      ' / $target',
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 13,
+                        color: AppColors.grayText,
                       ),
                     ),
                   ],
@@ -872,82 +870,75 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ),
               );
 
-              try {
-                // Simulate faucet claim (for testing)
-                // In production, this would call your backend API to claim tokens
-                await Future.delayed(const Duration(milliseconds: 800));
+              // Claim from faucet
+              // final stackSaveService = StackSaveService(
+              //   walletService: walletService,
+              // );
 
-                // Mock transaction signature
-                final signature = 'faucet_claim_${DateTime.now().millisecondsSinceEpoch}';
+              // final signature = await stackSaveService.claimFromFaucet(
+              //   tokenType: tokenType,
+              // );
 
-                // Close loading dialog
-                if (!mounted) return;
-                // ignore: use_build_context_synchronously
+              // Close loading dialog
+              if (context.mounted) {
                 Navigator.pop(context);
+              }
 
-                // Show success
-                if (!mounted) return;
-                // ignore: use_build_context_synchronously
-                showDialog(
-                  context: context,
-                  builder: (dialogContext) => AlertDialog(
-                    title: const Text('Success!'),
-                    content: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('You received $amount USDC!'),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Connected Wallet: ${walletService.shortenedAddress}',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey,
+              // Show result
+              if (context.mounted) {
+                if (signature != null) {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Success!'),
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('You received $amount!'),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Transaction Signature:',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold, fbd
+                              fontSize: 12,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'Transaction ID:',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
+                          const SizedBox(height: 4),
+                          Text(
+                            signature,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontFamily: 'monospace',
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          signature,
-                          style: const TextStyle(
-                            fontSize: 10,
-                            fontFamily: 'monospace',
-                          ),
+                        ],
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('OK'),
                         ),
                       ],
                     ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(dialogContext),
-                        child: const Text('OK'),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        walletService.useMockWallet
+                            ? 'Mock faucet claim simulated!'
+                            : 'Failed to claim from faucet',
                       ),
-                    ],
-                  ),
-                );
-              } catch (e) {
-                // Close loading dialog
-                if (!context.mounted) return;
-                // ignore: use_build_context_synchronously
-                Navigator.pop(context);
-
-                // Show error
-                if (!context.mounted) return;
-                // ignore: use_build_context_synchronously
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Failed to claim: ${e.toString()}'),
-                    backgroundColor: Colors.red,
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
+                      backgroundColor:
+                          walletService.useMockWallet ? Colors.orange : Colors.red,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
               }
+
+              stackSaveService.dispose();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: color,
