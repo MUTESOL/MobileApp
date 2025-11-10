@@ -61,6 +61,8 @@ git clone https://github.com/MUT-TANT/MobileApp.git
 cd stacksave
 ```
 
+> **Note:** If you want to try the app through our GitHub repo, please use the **main** branch for the stable version.
+
 ### 3. Install Dependencies
 
 ```bash

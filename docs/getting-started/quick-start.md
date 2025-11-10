@@ -28,6 +28,8 @@ flutter pub get
 flutter run
 ```
 
+> **Note:** If you want to try the app through our GitHub repo, please use the **main** branch for the stable version.
+
 ## Step 2: Launch the App
 
 1. Open StackSave on your device

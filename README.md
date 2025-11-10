@@ -76,8 +76,9 @@ You can run StackSave in **two ways**:
    ```bash
    git clone https://github.com/MUTESOL/MobileApp.git
    cd MobileApp
-   git checkout import/stacksave
    ```
+
+   > **Note:** If you want to try the app through our GitHub repo, please use the **main** branch for the stable version.
 
 2. **Install Dependencies**
 
