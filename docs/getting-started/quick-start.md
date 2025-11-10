@@ -22,7 +22,7 @@ Download StackSave from:
 
 ### For Developers
 ```bash
-git clone https://github.com/yourusername/stacksave.git
+git clone https://github.com/MUT-TANT/MobileApp.git
 cd stacksave
 flutter pub get
 flutter run

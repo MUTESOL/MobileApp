@@ -57,7 +57,7 @@ This command checks your environment and displays a report. Ensure all required 
 ### 2. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/stacksave.git
+git clone https://github.com/MUT-TANT/MobileApp.git
 cd stacksave
 ```
 

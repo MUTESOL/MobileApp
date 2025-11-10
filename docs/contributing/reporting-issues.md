@@ -6,9 +6,9 @@ Help us improve StackSave by reporting bugs and suggesting features.
 
 ### Search Existing Issues
 
-1. Check [existing issues](https://github.com/yourusername/stacksave/issues)
-2. Search [closed issues](https://github.com/yourusername/stacksave/issues?q=is%3Aissue+is%3Aclosed)
-3. Review [discussions](https://github.com/yourusername/stacksave/discussions)
+1. Check [existing issues](https://github.com/MUT-TANT/MobileApp/issues)
+2. Search [closed issues](https://github.com/MUT-TANT/MobileApp/issues?q=is%3Aissue+is%3Aclosed)
+3. Review [discussions](https://github.com/MUT-TANT/MobileApp/discussions)
 
 ### Try Latest Version
 
@@ -245,7 +245,7 @@ We will respond within 48 hours and work with you to resolve the issue.
 
 Not sure if it's a bug? Try these first:
 
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/stacksave/discussions)
+- **Discussions**: [GitHub Discussions](https://github.com/MUT-TANT/MobileApp/discussions)
 - **FAQ**: [Frequently Asked Questions](../resources/faq.md)
 - **Troubleshooting**: [Troubleshooting Guide](../resources/troubleshooting.md)
 

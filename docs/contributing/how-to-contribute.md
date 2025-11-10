@@ -46,7 +46,7 @@ Creative skills welcome!
 
 ```bash
 # Fork on GitHub, then clone your fork
-git clone https://github.com/YOUR_USERNAME/stacksave.git
+git clone https://github.com/MUT-TANT/MobileApp.git
 cd stacksave
 ```
 
@@ -142,7 +142,7 @@ git push origin feature/my-awesome-feature
 
 ### 8. Create Pull Request
 
-1. Go to [StackSave repository](https://github.com/yourusername/stacksave)
+1. Go to [StackSave repository](https://github.com/MUT-TANT/MobileApp.git)
 2. Click "New Pull Request"
 3. Select your fork and branch
 4. Fill in the PR template (see below)
@@ -472,7 +472,7 @@ By contributing, you agree that:
 
 Ready to contribute?
 
-1. **Find an issue**: [Good first issues](https://github.com/yourusername/stacksave/labels/good%20first%20issue)
+1. **Find an issue**: [Good first issues]
 2. **Set up dev environment**: [Development Setup](../development/setup.md)
 3. **Learn the codebase**: [Architecture](../architecture/project-structure.md)
 4. **Ask questions**: Don't hesitate!

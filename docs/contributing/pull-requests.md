@@ -6,9 +6,9 @@ Guidelines for contributing code to StackSave.
 
 ### 1. Check Existing Work
 
-- Search [open pull requests](https://github.com/yourusername/stacksave/pulls)
-- Review [project roadmap](https://github.com/yourusername/stacksave/projects)
-- Check [issues](https://github.com/yourusername/stacksave/issues) for planned work
+- Search [open pull requests](https://github.com/MUT-TANT/MobileApp/pulls)
+- Review [project roadmap](https://github.com/MUT-TANT/MobileApp/projects)
+- Check [issues](https://github.com/MUT-TANT/MobileApp/issues) for planned work
 
 ### 2. Discuss Major Changes
 
@@ -27,11 +27,11 @@ For significant features:
 # Fork repository on GitHub
 
 # Clone your fork
-git clone https://github.com/YOUR_USERNAME/stacksave.git
+git clone https://github.com/MUT-TANT/MobileApp.git
 cd stacksave
 
 # Add upstream remote
-git remote add upstream https://github.com/yourusername/stacksave.git
+git remote add upstream https://github.com/MUT-TANT/MobileApp.git
 ```
 
 ### 2. Create Branch
@@ -321,7 +321,7 @@ Your contribution is now part of StackSave!
 ### Stuck?
 
 - Comment on your PR
-- Ask in [Discussions](https://github.com/yourusername/stacksave/discussions)
+- Ask in [Discussions](https://github.com/MUT-TANT/MobileApp/discussions)
 - Tag maintainers (use sparingly)
 
 ### Need Review?
@@ -336,9 +336,9 @@ Your contribution is now part of StackSave!
 
 ```bash
 # 1. Setup
-git clone https://github.com/YOUR_USERNAME/stacksave.git
+git clone https://github.com/MUT-TANT/MobileApp.git
 cd stacksave
-git remote add upstream https://github.com/yourusername/stacksave.git
+git remote add upstream https://github.com/MUT-TANT/MobileApp.git
 
 # 2. Create branch
 git checkout -b feature/add-goal-categories
